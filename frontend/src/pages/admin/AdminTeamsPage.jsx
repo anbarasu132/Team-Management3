@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import api from '../../api/client';
 import Loader from '../../components/Loader';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 export default function AdminTeamsPage() {
   const [loading, setLoading] = useState(true);
@@ -10,6 +11,8 @@ export default function AdminTeamsPage() {
   const [pagination, setPagination] = useState({ page: 1, total_pages: 1, total: 0, limit: 10 });
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
+  const [deleteTeamTarget, setDeleteTeamTarget] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(q), 300);
@@ -28,6 +31,19 @@ export default function AdminTeamsPage() {
         if (!initialized) setInitialized(true);
       });
   }, [pagination.page, pagination.limit, debouncedQ]);
+
+  const handleDeleteTeam = async () => {
+    if (!deleteTeamTarget) return;
+    setDeletingId(deleteTeamTarget.id);
+    try {
+      await api.delete(`/admin/teams/${deleteTeamTarget.id}`);
+      setTeams((prev) => prev.filter((t) => t.id !== deleteTeamTarget.id));
+      setPagination((prev) => ({ ...prev, total: Math.max((prev.total || 1) - 1, 0) }));
+    } finally {
+      setDeletingId(null);
+      setDeleteTeamTarget(null);
+    }
+  };
 
   return (
     <DashboardLayout title="All Teams">
@@ -66,6 +82,15 @@ export default function AdminTeamsPage() {
                     <span className="font-medium">Co-Leader:</span> {t.co_leader_name || 'Not assigned'}
                   </div>
                 </div>
+                <div className="mt-2">
+                  <button
+                    onClick={() => setDeleteTeamTarget(t)}
+                    disabled={deletingId === t.id}
+                    className="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {deletingId === t.id ? 'Deleting...' : 'Delete Team'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -88,6 +113,15 @@ export default function AdminTeamsPage() {
           </div>
         </section>
       )}
+      <ConfirmDialog
+        open={Boolean(deleteTeamTarget)}
+        title="Delete Team"
+        message={deleteTeamTarget ? `Delete team "${deleteTeamTarget.name}"? This will also remove related projects and requests.` : ''}
+        confirmText="Delete"
+        danger
+        onConfirm={handleDeleteTeam}
+        onCancel={() => setDeleteTeamTarget(null)}
+      />
     </DashboardLayout>
   );
 }

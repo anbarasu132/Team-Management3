@@ -7,7 +7,9 @@ const {
   updateVacancy,
   deleteVacancy,
   getAllUsers,
+  deleteUser,
   getAllTeams,
+  deleteTeam,
   getTeamsByPerformance,
   getTeamCreationRequests,
   respondTeamCreationRequest,
@@ -36,7 +38,9 @@ router.put('/vacancies/:id', requirePermission(PERMISSIONS.MANAGE_VACANCIES), id
 router.delete('/vacancies/:id', requirePermission(PERMISSIONS.MANAGE_VACANCIES), idValidation, validate, deleteVacancy);
 
 router.get('/users', requirePermission(PERMISSIONS.VIEW_USERS), getAllUsers);
+router.delete('/users/:id', requirePermission(PERMISSIONS.DELETE_USERS), idValidation, validate, deleteUser);
 router.get('/teams', requirePermission(PERMISSIONS.VIEW_TEAMS), getAllTeams);
+router.delete('/teams/:id', requirePermission(PERMISSIONS.DELETE_TEAMS), idValidation, validate, deleteTeam);
 router.get('/teams/performance', requirePermission(PERMISSIONS.VIEW_TEAMS), getTeamsByPerformance);
 router.get('/team-requests', requirePermission(PERMISSIONS.REVIEW_TEAM_REQUESTS), getTeamCreationRequests);
 router.put(

@@ -39,7 +39,7 @@ const linksByRole = {
   ]
 };
 
-export default function Sidebar() {
+export default function Sidebar({ isMobileOpen = false, onClose = () => {} }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const links = linksByRole[user?.role] || [];
@@ -72,17 +72,24 @@ export default function Sidebar() {
   }, [user, location.pathname]);
 
   return (
-    <aside className="w-full bg-slate-900 text-white md:sticky md:top-0 md:h-screen md:w-64">
+    <>
+      {isMobileOpen && <button type="button" className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={onClose} aria-label="Close navigation overlay" />}
+      <aside
+        className={`fixed left-0 top-0 z-40 h-screen w-72 bg-slate-900 text-white transition-transform duration-200 md:sticky md:w-64 md:translate-x-0 ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
       <div className="border-b border-slate-700 p-4">
         <h2 className="text-lg font-semibold">Team Management</h2>
         <p className="text-xs text-slate-300">{user?.name} ({user?.role})</p>
       </div>
-      <nav className="flex flex-col gap-2 p-3 md:h-[calc(100vh-88px)]">
+      <nav className="flex h-[calc(100vh-88px)] flex-col gap-2 p-3">
         {links.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
             className={({ isActive }) => `block rounded px-3 py-2 text-sm ${isActive ? 'bg-slate-700' : 'hover:bg-slate-800'}`}
+            onClick={onClose}
           >
             <span className="flex items-center justify-between gap-2">
               <span>{link.label}</span>
@@ -94,10 +101,17 @@ export default function Sidebar() {
             </span>
           </NavLink>
         ))}
-        <button onClick={logout} className="mt-2 rounded bg-red-600 px-3 py-2 text-sm hover:bg-red-700 md:mt-auto">
+        <button
+          onClick={() => {
+            onClose();
+            logout();
+          }}
+          className="mt-2 rounded bg-red-600 px-3 py-2 text-sm hover:bg-red-700 md:mt-auto"
+        >
           Logout
         </button>
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }

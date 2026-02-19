@@ -139,6 +139,42 @@ async function getAllUsers(req, res, next) {
   }
 }
 
+async function deleteUser(req, res, next) {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const userId = Number(req.params.id);
+
+    if (req.user.id === userId) {
+      await conn.rollback();
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+
+    const [rows] = await conn.query('SELECT id, role FROM users WHERE id = ? FOR UPDATE', [userId]);
+    if (!rows.length) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await conn.query('UPDATE teams SET leader_id = NULL WHERE leader_id = ?', [userId]);
+    await conn.query('UPDATE teams SET co_leader_id = NULL WHERE co_leader_id = ?', [userId]);
+
+    const [result] = await conn.query('DELETE FROM users WHERE id = ?', [userId]);
+    if (result.affectedRows === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await conn.commit();
+    return res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    await conn.rollback();
+    return next(error);
+  } finally {
+    conn.release();
+  }
+}
+
 async function getAllTeams(req, res, next) {
   try {
     const { page, limit, offset } = getPaginationParams(req.query);
@@ -179,6 +215,34 @@ async function getAllTeams(req, res, next) {
     return res.json(pagedResponse(rows, countRows[0].total, page, limit));
   } catch (error) {
     return next(error);
+  }
+}
+
+async function deleteTeam(req, res, next) {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const teamId = Number(req.params.id);
+
+    const [teamRows] = await conn.query('SELECT id FROM teams WHERE id = ? FOR UPDATE', [teamId]);
+    if (!teamRows.length) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    await conn.query('UPDATE users SET team_id = NULL WHERE team_id = ?', [teamId]);
+    await conn.query(
+      "UPDATE users SET role = 'participant' WHERE role = 'co-leader' AND team_id IS NULL"
+    );
+    await conn.query('DELETE FROM teams WHERE id = ?', [teamId]);
+
+    await conn.commit();
+    return res.json({ message: 'Team deleted successfully' });
+  } catch (error) {
+    await conn.rollback();
+    return next(error);
+  } finally {
+    conn.release();
   }
 }
 
@@ -341,7 +405,9 @@ module.exports = {
   updateVacancy,
   deleteVacancy,
   getAllUsers,
+  deleteUser,
   getAllTeams,
+  deleteTeam,
   getTeamsByPerformance,
   getTeamCreationRequests,
   respondTeamCreationRequest,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import api from '../../api/client';
 import Loader from '../../components/Loader';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 function roleStyles(role) {
   if (role === 'admin') return 'bg-rose-100 text-rose-700';
@@ -18,6 +19,8 @@ export default function AdminUsersPage() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [role, setRole] = useState('');
+  const [deleteUserTarget, setDeleteUserTarget] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(q), 300);
@@ -36,6 +39,19 @@ export default function AdminUsersPage() {
         if (!initialized) setInitialized(true);
       });
   }, [pagination.page, pagination.limit, debouncedQ, role]);
+
+  const handleDeleteUser = async () => {
+    if (!deleteUserTarget) return;
+    setDeletingId(deleteUserTarget.id);
+    try {
+      await api.delete(`/admin/users/${deleteUserTarget.id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUserTarget.id));
+      setPagination((prev) => ({ ...prev, total: Math.max((prev.total || 1) - 1, 0) }));
+    } finally {
+      setDeletingId(null);
+      setDeleteUserTarget(null);
+    }
+  };
 
   return (
     <DashboardLayout title="All Users">
@@ -79,6 +95,15 @@ export default function AdminUsersPage() {
                 </div>
                 <p className="text-sm text-slate-700">Email: {u.email}</p>
                 <p className="text-sm text-slate-600">Team ID: {u.team_id || 'Not assigned'}</p>
+                <div className="mt-2">
+                  <button
+                    onClick={() => setDeleteUserTarget(u)}
+                    disabled={deletingId === u.id}
+                    className="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {deletingId === u.id ? 'Deleting...' : 'Delete User'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -101,6 +126,15 @@ export default function AdminUsersPage() {
           </div>
         </section>
       )}
+      <ConfirmDialog
+        open={Boolean(deleteUserTarget)}
+        title="Delete User"
+        message={deleteUserTarget ? `Delete ${deleteUserTarget.name} (${deleteUserTarget.email})? This cannot be undone.` : ''}
+        confirmText="Delete"
+        danger
+        onConfirm={handleDeleteUser}
+        onCancel={() => setDeleteUserTarget(null)}
+      />
     </DashboardLayout>
   );
 }
