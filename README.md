@@ -20,7 +20,7 @@ backend/
     routes/
     utils/
     app.js
-    server.js
+    index.js
   sql/schema.sql
   .env.example
   package.json
@@ -62,6 +62,21 @@ Backend base URL: `http://localhost:5000/api`
    ```
 
 Frontend URL: `http://localhost:5173`
+
+## Railway Deploy (Backend)
+1. Push this repo to GitHub.
+2. In Railway, create a new project and connect the repo.
+3. Add a MySQL service in the same Railway project.
+4. Set backend service variables:
+   - `DB_HOST=${{MySQL.MYSQLHOST}}`
+   - `DB_PORT=${{MySQL.MYSQLPORT}}`
+   - `DB_USER=${{MySQL.MYSQLUSER}}`
+   - `DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}`
+   - `DB_NAME=${{MySQL.MYSQLDATABASE}}`
+   - `JWT_SECRET=<your-secret>`
+   - `JWT_EXPIRES_IN=1d`
+5. Run `backend/sql/schema.sql` against the Railway MySQL database.
+6. Deploy. Start command is already configured via `railway.json`.
 
 ## Roles and Access
 - Admin: Manage news, vacancies, users, teams.
