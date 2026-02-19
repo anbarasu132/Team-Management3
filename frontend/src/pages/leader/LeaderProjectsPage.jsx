@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import api from '../../api/client';
+import api, { buildFileUrl } from '../../api/client';
 import Loader from '../../components/Loader';
 import SearchableSelect from '../../components/SearchableSelect';
 
@@ -317,7 +317,7 @@ export default function LeaderProjectsPage() {
                     <div key={f.id} className="mb-2 rounded border p-2">
                       <p className="font-medium">{f.original_name}</p>
                       <p className="text-xs text-slate-500">By: {f.uploaded_by_name || f.uploaded_by} | Size: {Math.round((f.file_size || 0) / 1024)} KB</p>
-                      <a href={`http://localhost:5000${f.file_path}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open</a>
+                      <a href={buildFileUrl(f.file_path)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open</a>
                     </div>
                   ))}
                 </div>
