@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS project_assignments;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS team_join_requests;
 DROP TABLE IF EXISTS team_creation_requests;
-DROP TABLE IF EXISTS team_vacancies;
+DROP TABLE IF EXISTS team_vacancies;  
 DROP TABLE IF EXISTS news;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS teams;
