@@ -80,7 +80,7 @@ Frontend URL: `http://localhost:5173`
 
 ## Roles and Access
 - Admin: Manage news, vacancies, users, teams.
-- Leader: Create/manage team, assign co-leader, add/remove participants (max 8), create/assign projects, monitor logs/status.
+- Leader: Create/manage team, assign co-leader, add/remove participants (max 9), create/assign projects, monitor logs/status.
 - Co-Leader: View team details/projects and progress.
 - Participant: View assigned projects and update status.
 

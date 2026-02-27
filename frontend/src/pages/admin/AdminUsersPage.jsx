@@ -16,6 +16,7 @@ export default function AdminUsersPage() {
   const [initialized, setInitialized] = useState(false);
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, total_pages: 1, total: 0, limit: 10 });
+  const [refreshToken, setRefreshToken] = useState(0);
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [role, setRole] = useState('');
@@ -38,7 +39,14 @@ export default function AdminUsersPage() {
         setLoading(false);
         if (!initialized) setInitialized(true);
       });
-  }, [pagination.page, pagination.limit, debouncedQ, role]);
+  }, [pagination.page, pagination.limit, debouncedQ, role, refreshToken]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setRefreshToken((prev) => prev + 1);
+    }, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handleDeleteUser = async () => {
     if (!deleteUserTarget) return;
@@ -95,6 +103,9 @@ export default function AdminUsersPage() {
                 </div>
                 <p className="text-sm text-slate-700">Email: {u.email}</p>
                 <p className="text-sm text-slate-600">Team ID: {u.team_id || 'Not assigned'}</p>
+                <p className={`text-sm font-medium ${u.is_online ? 'text-emerald-700' : 'text-slate-500'}`}>
+                  Status: {u.is_online ? 'Online' : 'Offline'}
+                </p>
                 <div className="mt-2">
                   <button
                     onClick={() => setDeleteUserTarget(u)}

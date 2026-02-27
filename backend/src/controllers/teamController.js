@@ -374,9 +374,9 @@ async function respondJoinRequest(req, res, next) {
       [request.team_id, 'participant']
     );
 
-    if (countRows[0].count >= 8) {
+    if (countRows[0].count >= 9) {
       await conn.rollback();
-      return res.status(400).json({ message: 'Participant limit reached (max 8)' });
+      return res.status(400).json({ message: 'Participant limit reached (max 9)' });
     }
 
     await conn.query('UPDATE users SET team_id = ? WHERE id = ?', [request.team_id, request.participant_id]);

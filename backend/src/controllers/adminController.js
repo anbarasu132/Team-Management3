@@ -2,6 +2,7 @@ const { body, param } = require('express-validator');
 const db = require('../config/db');
 const { notifyUser } = require('../utils/notifications');
 const { getPaginationParams, pagedResponse } = require('../utils/pagination');
+const { mapOnlineStatus, removeUserPresence } = require('../utils/presence');
 
 const newsValidation = [
   body('title').trim().notEmpty().withMessage('Title is required'),
@@ -133,7 +134,7 @@ async function getAllUsers(req, res, next) {
       [...params, limit, offset]
     );
 
-    return res.json(pagedResponse(rows, countRows[0].total, page, limit));
+    return res.json(pagedResponse(mapOnlineStatus(rows), countRows[0].total, page, limit));
   } catch (error) {
     return next(error);
   }
@@ -164,6 +165,7 @@ async function deleteUser(req, res, next) {
       await conn.rollback();
       return res.status(404).json({ message: 'User not found' });
     }
+    removeUserPresence(userId);
 
     await conn.commit();
     return res.json({ message: 'User deleted successfully' });
