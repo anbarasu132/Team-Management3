@@ -62,7 +62,7 @@ export default function TeamChatPage() {
       {loading ? <Loader /> : (
         <section className="rounded bg-white p-4 shadow">
           <div className="mb-3 rounded border bg-slate-50 p-3 text-sm text-slate-600">
-            Global team chat for leader and participants.
+            Global team chat for leader, co-leader, and participants.
           </div>
           <div className="h-[60vh] space-y-3 overflow-auto rounded border p-3">
             {messages.length === 0 && <p className="text-sm text-slate-500">No messages yet.</p>}

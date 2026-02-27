@@ -26,6 +26,9 @@ const linksByRole = {
   ],
   'co-leader': [
     { to: '/co-leader', label: 'Co-Leader Dashboard' },
+    { to: '/co-leader/assigned-projects', label: 'Assigned Projects' },
+    { to: '/co-leader/news', label: 'News' },
+    { to: '/team-chat', label: 'Team Chat' },
     { to: '/notifications', label: 'Notifications' }
   ],
   participant: [

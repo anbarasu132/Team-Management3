@@ -48,7 +48,11 @@ export default function App() {
         <Route path="/leader/news" element={<LeaderNewsPage />} />
         <Route path="/leader/timeline" element={<LeaderTimelinePage />} />
       </Route>
-      <Route element={<ProtectedRoute roles={['co-leader']} />}><Route path="/co-leader" element={<CoLeaderDashboard />} /></Route>
+      <Route element={<ProtectedRoute roles={['co-leader']} />}>
+        <Route path="/co-leader" element={<CoLeaderDashboard />} />
+        <Route path="/co-leader/assigned-projects" element={<ParticipantAssignedProjectsPage />} />
+        <Route path="/co-leader/news" element={<LeaderNewsPage />} />
+      </Route>
       <Route element={<ProtectedRoute roles={['participant']} />}>
         <Route path="/participant" element={<ParticipantDashboardPage />} />
         <Route path="/participant/my-team" element={<ParticipantMyTeamPage />} />
@@ -59,7 +63,7 @@ export default function App() {
       <Route element={<ProtectedRoute roles={['admin', 'leader', 'co-leader', 'participant']} />}>
         <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
-      <Route element={<ProtectedRoute roles={['leader', 'participant']} />}>
+      <Route element={<ProtectedRoute roles={['leader', 'co-leader', 'participant']} />}>
         <Route path="/team-chat" element={<TeamChatPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
