@@ -1,6 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
+
+function destinationByRole(role) {
+  if (role === 'admin') return '/admin';
+  if (role === 'leader') return '/leader';
+  if (role === 'co-leader') return '/co-leader';
+  return '/participant';
+}
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'participant' });
@@ -8,7 +16,10 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const googleButtonRef = useRef(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +36,67 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!googleClientId || !googleButtonRef.current) return;
+
+    const handleCredential = async (response) => {
+      if (!response?.credential) return;
+      setError('');
+      setSuccess('');
+      setLoading(true);
+      try {
+        const { data } = await api.post('/auth/google', {
+          credential: response.credential,
+          role: form.role,
+          mode: 'register'
+        });
+        login(data.token, data.user);
+        navigate(destinationByRole(data.user.role));
+      } catch (err) {
+        setError(err.response?.data?.message || 'Google registration failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const initializeGoogle = () => {
+      if (!window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleCredential
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 320
+      });
+    };
+
+    const existingScript = document.getElementById('google-identity');
+    if (existingScript?.dataset.loaded === 'true') {
+      initializeGoogle();
+      return;
+    }
+
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.id = 'google-identity';
+      script.onload = () => {
+        script.dataset.loaded = 'true';
+        initializeGoogle();
+      };
+      document.head.appendChild(script);
+    } else {
+      existingScript.onload = () => {
+        existingScript.dataset.loaded = 'true';
+        initializeGoogle();
+      };
+    }
+  }, [googleClientId, form.role, login, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
@@ -70,6 +142,20 @@ export default function RegisterPage() {
           <option value="leader">Leader</option>
         </select>
         <button disabled={loading} className="w-full rounded bg-slate-900 py-2 text-white hover:bg-slate-700 disabled:opacity-60">{loading ? 'Creating account...' : 'Register'}</button>
+        <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          or
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+        {googleClientId ? (
+          <div className="flex justify-center">
+            <div ref={googleButtonRef} />
+          </div>
+        ) : (
+          <p className="rounded bg-amber-50 p-2 text-xs text-amber-700">
+            Google sign-up is not configured. Set `VITE_GOOGLE_CLIENT_ID` to enable it.
+          </p>
+        )}
         <p className="mt-4 text-sm text-slate-600">Already have an account? <Link className="text-blue-600" to="/login">Login</Link></p>
       </form>
     </div>

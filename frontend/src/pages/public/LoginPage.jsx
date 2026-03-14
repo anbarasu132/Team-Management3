@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -15,8 +15,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const googleButtonRef = useRef(null);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +34,62 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!googleClientId || !googleButtonRef.current) return;
+
+    const handleCredential = async (response) => {
+      if (!response?.credential) return;
+      setError('');
+      setLoading(true);
+      try {
+        const { data } = await api.post('/auth/google', { credential: response.credential });
+        login(data.token, data.user);
+        navigate(destinationByRole(data.user.role));
+      } catch (err) {
+        setError(err.response?.data?.message || 'Google login failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const initializeGoogle = () => {
+      if (!window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleCredential
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 320
+      });
+    };
+
+    const existingScript = document.getElementById('google-identity');
+    if (existingScript?.dataset.loaded === 'true') {
+      initializeGoogle();
+      return;
+    }
+
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.id = 'google-identity';
+      script.onload = () => {
+        script.dataset.loaded = 'true';
+        initializeGoogle();
+      };
+      document.head.appendChild(script);
+    } else {
+      existingScript.onload = () => {
+        existingScript.dataset.loaded = 'true';
+        initializeGoogle();
+      };
+    }
+  }, [googleClientId, login, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
@@ -71,6 +129,20 @@ export default function LoginPage() {
           </button>
         </div>
         <button disabled={loading} className="w-full rounded bg-slate-900 py-2 text-white hover:bg-slate-700 disabled:opacity-60">{loading ? 'Signing in...' : 'Sign In'}</button>
+        <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          or
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+        {googleClientId ? (
+          <div className="flex justify-center">
+            <div ref={googleButtonRef} />
+          </div>
+        ) : (
+          <p className="rounded bg-amber-50 p-2 text-xs text-amber-700">
+            Google sign-in is not configured. Set `VITE_GOOGLE_CLIENT_ID` to enable it.
+          </p>
+        )}
         <p className="mt-4 text-sm text-slate-600">No account? <Link className="text-blue-600" to="/register">Register</Link></p>
       </form>
     </div>
